@@ -12,6 +12,12 @@ Unofficial integration, same idea as `pi-agy` / built-in xAI subscription: OAuth
 ## Install
 
 ```bash
+pi install npm:pi-muse-subscription
+```
+
+Or pin to a git ref:
+
+```bash
 pi install git:github.com/xesws/pi-muse-subscription@v0.1.1
 ```
 
