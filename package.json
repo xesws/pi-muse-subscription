@@ -1,0 +1,43 @@
+{
+  "name": "pi-muse-subscription",
+  "version": "0.1.1",
+  "description": "Muse Code coding-plan subscription provider for Pi (OAuth device-code, not PAYG LLM| keys).",
+  "type": "module",
+  "license": "MIT",
+  "author": "tangyiq",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "muse",
+    "muse-code",
+    "meta",
+    "oauth",
+    "subscription"
+  ],
+  "files": [
+    "index.ts",
+    "src",
+    "README.md",
+    "LICENSE",
+    "tsconfig.json"
+  ],
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "npx tsx --test src/auth/import-muse-cli.test.ts src/auth/oauth-parse.test.ts src/auth/mint.test.ts"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": ">=0.80.0",
+    "@earendil-works/pi-coding-agent": ">=0.80.0"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-ai": "^0.84.4",
+    "@earendil-works/pi-coding-agent": "^0.84.4",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}
