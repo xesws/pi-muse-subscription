@@ -26,6 +26,25 @@ test("parses oauth tokens from Muse CLI auth.json", () => {
   assert.equal(inspection.credential?.type, "oauth");
 });
 
+test("imported token without refresh_token is treated as long-lived", () => {
+  const raw = JSON.stringify({
+    providers: {
+      meta: {
+        mechanism: "oauth",
+        storage: "file",
+        access_token: "tok_access",
+        expires_at: 2000000000,
+      },
+    },
+  });
+  const inspection = parseMuseCliAuthJson(raw, "/tmp/muse-auth.json");
+  assert.equal(inspection.credential?.refresh, "");
+  assert.ok(
+    (inspection.credential?.expires ?? 0) - Date.now() > 30 * 24 * 60 * 60 * 1000,
+    "refresh-less CLI credential must not expire on the CLI expires_at",
+  );
+});
+
 test("keychain-only login has no importable tokens", () => {
   const raw = JSON.stringify({
     schema_version: 1,

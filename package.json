@@ -1,6 +1,6 @@
 {
   "name": "pi-muse-subscription",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Muse Code coding-plan subscription provider for Pi (OAuth device-code, not PAYG LLM| keys).",
   "type": "module",
   "license": "MIT",

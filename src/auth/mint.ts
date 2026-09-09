@@ -121,6 +121,12 @@ async function mintFromOAuth(oauthAccess: string, signal: AbortSignal): Promise<
         : isRecord(payload) && typeof payload.title === "string"
           ? `: ${payload.title}`
           : "";
+    // access token 真失效时给出可操作提示（本地不再提前判过期，见 LONG_LIVED_TTL_MS）。
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(
+        `Muse session expired or was revoked — run /login muse again (HTTP ${response.status})${detail}`,
+      );
+    }
     throw new Error(`Muse key mint failed (HTTP ${response.status})${detail}`);
   }
   return parseMintResponse(payload);

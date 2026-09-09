@@ -11,6 +11,7 @@ import {
   DEVICE_AUTHORIZATION_PATH,
   DEVICE_CODE_GRANT,
   DEVICE_TOKEN_PATH,
+  LONG_LIVED_TTL_MS,
   OIDC_TOKEN_PATH,
   PROVIDER_NAME,
   REFRESH_SKEW_MS,
@@ -116,12 +117,13 @@ export function credentialsFromTokenResponse(
       ? body.refresh_token
       : previousRefreshToken ?? "";
   const expiresInSeconds = positiveNumber(body, "expires_in", DEFAULT_TOKEN_LIFETIME_SECONDS);
-  return {
-    type: "oauth",
-    access,
-    refresh,
-    expires: Date.now() + expiresInSeconds * 1000 - REFRESH_SKEW_MS,
-  };
+  // 有 refresh token 才用短有效期 + 提前 5 分钟刷新（常规 OAuth）。
+  // Muse 设备码流程不签发 refresh token，此时若照抄 expires_in，本地会在
+  // 约 50 分钟后判过期并触发一次注定失败的 refresh（见 LONG_LIVED_TTL_MS 注释）。
+  const expires = refresh
+    ? Date.now() + expiresInSeconds * 1000 - REFRESH_SKEW_MS
+    : Date.now() + LONG_LIVED_TTL_MS;
+  return { type: "oauth", access, refresh, expires };
 }
 
 function parseDeviceCode(body: JsonObject): DeviceCode {
@@ -262,8 +264,11 @@ async function refreshMuseToken(
   credential: OAuthCredential,
   signal: AbortSignal,
 ): Promise<OAuthCredential> {
+  // Muse 的设备码流程不发 refresh token（Meta 拒绝一切 scope），所以刷新请求永远不可能成功。
+  // 旧实现直接抛错 → Pi 报 "OAuth refresh failed for muse" 并要求重新登录；
+  // 现在改为沿用同一个 access token 并续上长期有效期，让服务端 401 决定是否真的失效。
   if (!credential.refresh) {
-    throw new Error("Muse refresh token missing. Run /login muse again.");
+    return { ...credential, expires: Date.now() + LONG_LIVED_TTL_MS };
   }
 
   let lastError: Error | undefined;

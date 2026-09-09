@@ -51,6 +51,7 @@ Context ~1M, max output 128k. Thinking levels: `minimal` / `low` / `medium` / `h
 - On each request, Pi mints a subscription Model API key via `POST https://api.meta.ai/muse-code/key` (same as the official Muse CLI). The OAuth access token is **not** sent to `/v1`.
 - Inference: OpenAI Responses at `https://api.meta.ai/v1` with the minted `LLM|` key
 - Tokens stored in `~/.pi/agent/auth.json` under `muse` (OAuth). Minted keys are cached in memory only.
+- **No refresh token by design.** Meta's device flow rejects every `scope` (`invalid_scope`), so the token response carries no `refresh_token`, and its `expires_in` is far shorter than the token's real lifetime (measured: a token still minted keys 29 h after its local expiry). Since v0.1.2 a refresh-less credential is treated as long-lived instead of expiring on the OIDC `expires_in`; Pi keeps using it until Meta answers 401/403, then reports `Muse session expired or was revoked — run /login muse again`. Before v0.1.2 the short expiry triggered a refresh that could never succeed, so Pi asked for a new login roughly every 50 minutes.
 
 ## Commands
 

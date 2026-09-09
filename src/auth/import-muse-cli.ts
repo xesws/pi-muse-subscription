@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { OAuthCredential } from "@earendil-works/pi-ai";
-import { BASE_URL, REFRESH_SKEW_MS } from "../constants.js";
+import { BASE_URL, LONG_LIVED_TTL_MS, REFRESH_SKEW_MS } from "../constants.js";
 
 export interface MuseCliAuthInspection {
   path: string;
@@ -77,7 +77,11 @@ export function parseMuseCliAuthJson(raw: string, path: string): MuseCliAuthInsp
   const apiBaseUrl = trustedHttpsUrl(readString(meta, "api_base_url"));
   const access = readString(meta, "access_token");
   const refresh = readString(meta, "refresh_token") ?? "";
-  const expires = normalizeExpiresAt(meta.expires_at) ?? Date.now() + 60 * 60 * 1000 - REFRESH_SKEW_MS;
+  // 同 oauth.ts：Muse 设备码流程不签发 refresh token，其 expires_at 短于 token 真实寿命，
+  // 无 refresh token 时按长期有效处理，避免 Pi 触发注定失败的 refresh。
+  const expires = refresh
+    ? (normalizeExpiresAt(meta.expires_at) ?? Date.now() + 60 * 60 * 1000 - REFRESH_SKEW_MS)
+    : Date.now() + LONG_LIVED_TTL_MS;
 
   const hasTokens = Boolean(access);
   const keychainOnly = !hasTokens && (storage === "keychain" || mechanism === "oauth");
